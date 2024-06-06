@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STT MEMO</title>
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+
+    <div class="container">
+        <h1>音声メモツール</h1>
+        <div>
+            <input id="uname"  type="text" placeholder="タイトル">
+        </div>
+        <div class="rec">
+            <button class="start">録音開始</button>
+            <button class="stop">終了</button>
+        </div>
+        
+        <div>
+            <textarea id="text" placeholder="タイトルを入力後「録音開始」を押してから話して下さい。"></textarea>
+        </div>
+        <button id="send" class="start">記録</button>
+        <div id="output" class="output"></div>
+    </div>
+
+
+    <script>
+        const recognition = new webkitSpeechRecognition(); // prefix 必要 SpeechRecognition
+        recognition.lang = "ja";
+        recognition.continuous = true;
+        recognition.onresult = ({ results }) => {
+        const output = document.querySelector("#text");
+        output.textContent = results[0][0].transcript;
+        };
+
+        const startButton = document.querySelector(".start");
+        startButton.addEventListener("click", () => {
+        recognition.start();
+        });
+        const stopButton = document.querySelector(".stop");
+        stopButton.addEventListener("click", () => {
+        recognition.stop();
+        });
+    </script>
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
+        import { getDatabase, ref, push, set, onChildAdded, remove, onChildRemoved }
+            from "https://www.gstatic.com/firebasejs/9.1.0/firebase-database.js";
+        // Your web app's Firebase configuration
+
+        const firebaseConfig = {"xxx"
+
+        };
+        const app   = initializeApp(firebaseConfig);
+        const db    = getDatabase(app); //RealtimeDBに接続
+        const dbRef = ref(db, "chat"); //RealtimeDB内の"chat"を使う
+
+        //データ登録(Click)
+        $  ("#send").on("click", function(){
+            const uname = $("#uname").val();
+            const text = $("#text").val();
+
+        //データのボックス化        
+            const msg = {
+                uname,
+                text,
+            }
+
+        //送信処理
+            const newPostRef = push(dbRef)
+            set(newPostRef, msg)
+        
+        //送信後削除処理
+            $("#uname").val("");
+            $("#text").val("");
+        })
+
+        //データ登録(Enter)
+        //最初にデータ取得＆テンプレートリテラルでリアルタイムにデータを取得
+
+        onChildAdded(dbRef, function(data){
+            const msg= data.val();
+            const key = data.key;
+
+            let html =`
+                <div class= "msg">
+                    <p>${msg.uname}</p>
+                    <p>${msg.text}</p>
+                </div>
+            `
+            
+            //#outputの最後に追加
+            $("#output").append(html);
+        })
+    </script>
+</body>
+
+</html>
